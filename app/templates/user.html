@@ -3,7 +3,7 @@
 {% block content %}
 	<table>
 		<tr valign="top">
-			<td><img src={{ url_for('static', filename='avatars/'+ avatar +'.jpg') }} alt={{ user.nickname }} width="120" /></td>
+			<td><img src={{ url_for('static', filename='avatars/'+ user.id.__str__() +'.jpg') }} alt={{ user.nickname }} width="120" /></td>
 			<td>
 				<h1> User: {{ user.nickname }}</h1>
 				{% if user.about_me %}<p>{{ user.about_me }}</p>{% endif %}
@@ -21,8 +21,14 @@
 		</tr>
 	</table>
 	<hr>
-	{% for post in posts %}
+	{% for post in posts.items %}
 		{% include 'post.html' %}
 	{% endfor %}
 
+	{% if posts.has_prev %}<a href="{{ url_for('user', nickname=user.nickname, page=posts.prev_num) }}">&lt;&lt;Prev Page</a>
+	{% else %} &lt;&lt; Prev Page {% endif %}
+	
+	{% if posts.has_next %}<a href="{{ url_for('user', nickname=user.nickname, page=posts.next_num) }}">Next Page &gt;&gt;</a>
+	{% else %} Next Page &gt;&gt; {% endif %}
+	
 {% endblock %}

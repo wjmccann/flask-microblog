@@ -1,6 +1,6 @@
 <table>
 	<tr valign="top">
-		<td><img src={{ url_for('static', filename='avatars/' + avatar + '.jpg') }} alt={{ user.nickname }} width="60" /></td>
-		<td><i>{{ post.author.nickname }} says: </i> <br> {{ post.body }} </td>
+		<td><img src={{ url_for('static', filename='avatars/' + post.author.id.__str__() + '.jpg') }} alt={{ user.nickname }} width="60" /></td>
+		<td><i><a href="{{ url_for('user', nickname=post.author.nickname) }}">{{ post.author.nickname }}</a> says: </i> <br> {{ post.body }} </td>
 	</tr>
 </table>

@@ -1,28 +1,31 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
 from app import app, db
-from .forms import LoginForm, SignupForm, EditForm
+from .forms import LoginForm, SignupForm, EditForm, PostForm
 from flask_login import login_required, login_user, current_user, logout_user, confirm_login, login_fresh
-from .models import User
+from .models import User, Post
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os, shutil
+from config import POSTS_PER_PAGE
 
-@app.route('/')
-@app.route('/index')
+@app.route('/', methods=['GET', 'POST'])
+@app.route('/index', methods=['GET', 'POST'])
+@app.route('/index/<int:page>', methods=['GET', 'POST'])
 @login_required
-def index():
+def index(page=1):
 	user = current_user
-	posts = [  # fake array of posts
-        { 
-            'author': {'nickname': 'John'}, 
-            'body': 'Beautiful day in Portland!' 
-        },
-        { 
-            'author': {'nickname': 'Susan'}, 
-            'body': 'The Avengers movie was so cool!' 
-        }
-    ]
-	return render_template('index.html',title='Home', user=user, posts=posts)
+	
+	form = PostForm()
+	if form.validate_on_submit():
+		post = Post(body=form.post.data, timestamp=datetime.utcnow(), author=user)
+		db.session.add(post)
+		db.session.commit()
+		flash('Your post is now live!')
+		return redirect(url_for('index'))
+	
+	posts = current_user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
+ 
+	return render_template('index.html',title='Home', user=user, posts=posts, form=form)
 	
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -90,18 +93,16 @@ def signup():
 	return render_template('signup.html', title='Sign Up', form=form)
 
 @app.route('/user/<nickname>')
+@app.route('/user/<nickname>/<int:page>')
 @login_required
-def user(nickname):
+def user(nickname, page=1):
 	user = User.query.filter_by(nickname=nickname).first()
 	if user == None:
 		flash('User %s not found.' % nickname)
 		return redirect(url_for('index'))
-	posts = [ 
-		{'author': user, 'body': 'Test post #1'},
-		{'author': user, 'body': 'Test post #2'}
-	]
-	avatar = str(user.id)
-	return render_template('user.html', user=user, posts=posts, avatar=avatar)
+	posts = user.posts.paginate(page, POSTS_PER_PAGE, False)
+	
+	return render_template('user.html', user=user, posts=posts)
 	
 @app.before_request
 def before_request():

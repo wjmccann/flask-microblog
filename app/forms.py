@@ -16,3 +16,6 @@ class SignupForm(FlaskForm):
 class EditForm(FlaskForm):
 	nickname = TextField('nickname', validators=[DataRequired()])
 	about_me = TextAreaField('about_me', validators=[Length(min=0, max=140)])
+	
+class PostForm(FlaskForm):
+	post = TextField('post', validators=[DataRequired()])
