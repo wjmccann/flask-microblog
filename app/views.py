@@ -5,7 +5,7 @@ from flask_login import login_required, login_user, current_user, logout_user, c
 from .models import User
 from datetime import datetime
 from werkzeug.utils import secure_filename
-import os
+import os, shutil
 
 @app.route('/')
 @app.route('/index')
@@ -75,7 +75,14 @@ def signup():
 		except Exception as e:
 			flash('Error registering user!')
 			return redirect(url_for('signup'))
-			
+		
+		#follow self
+		db.session.add(user.follow(user))
+		db.session.commit()
+		
+		#create blank avatar
+		shutil.copy2('app/static/avatars/blank.jpg', ('app/static/avatars/'+str(user.id)+'.jpg'))
+		
 		#log in new user
 		login_user(user)
 		flash('You successfully signed up!')
@@ -117,13 +124,13 @@ def edit():
 				return redirect(url_for('edit'))
 			else:
 				current_user.nickname = form.nickname.data
-				current_user.about_me = form.about_me.data
+		current_user.about_me = form.about_me.data
 				
 		f = request.files['file']
 		if f.filename != '':
 			f.filename = str(current_user.id)+'.jpg'
 			filename = secure_filename(f.filename)
-			f.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+			f.save(os.path.join('app/static/avatars', filename))
 		
 		db.session.add(current_user)
 		db.session.commit()
@@ -134,7 +141,6 @@ def edit():
 		form.about_me.data = current_user.about_me
 	
 	return render_template('edit.html', form=form)
-
 
 #static url cache buster	
 @app.context_processor
@@ -150,3 +156,40 @@ def dated_url_for(endpoint, **values):
             values['q'] = int(os.stat(file_path).st_mtime)
     return url_for(endpoint, **values)
 	
+@app.route('/follow/<nickname>')
+@login_required
+def follow(nickname):
+	user= User.query.filter_by(nickname=nickname).first()
+	if user is None:
+		flash('User %s not found' % nickname)
+		return redirect(url_for('index'))
+	if user == current_user:
+		flash('You can\'t follow yourself!')
+		return redirect(url_for('user', nickname=nickname))
+	u = current_user.follow(user)
+	if u is None:
+		flash('Cannot follow '+ nickname )
+		return redirect(url_for('user', nickname=nickname))
+	db.session.add(u)
+	db.session.commit()
+	flash('You are now following ' + nickname )
+	return redirect(url_for('user', nickname=nickname))
+	
+@app.route('/unfollow/<nickname>')
+@login_required
+def unfollow(nickname):
+	user = User.query.filter_by(nickname=nickname).first()
+	if user is None:
+		flash('User %s not found' % nickname)
+		return redirect(url_for('index'))
+	if user == current_user:
+		flash('You can\'t unfollow yourself!')
+		return redirect(url_for('user', nickname=nickname))
+	u = current_user.unfollow(user)
+	if u is None:
+		flash('Cannot unfollow ' + nickname )
+		return redirect(url_for('user', nickname=nickname))
+	db.session.add(u)
+	db.session.commit()
+	flash('You have stopped following ' + nickname)
+	return redirect(url_for('user', nickname=nickname))

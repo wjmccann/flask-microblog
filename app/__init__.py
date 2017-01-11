@@ -1,12 +1,9 @@
-from flask import Flask, url_for
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
-
-UPLOAD_FOLDER = 'app/static/avatars'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 from flask_login import LoginManager
 login_manager = LoginManager()
