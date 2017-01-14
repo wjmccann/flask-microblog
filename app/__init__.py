@@ -5,6 +5,9 @@ app = Flask(__name__)
 app.config.from_object('config')
 db = SQLAlchemy(app)
 
+from flask_babel import Babel
+babel = Babel(app)
+
 from flask_login import LoginManager
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -21,3 +24,8 @@ if not app.debug:
     file_handler.setLevel(logging.INFO)
     app.logger.addHandler(file_handler)
     app.logger.info('microblog startup')
+
+from .momentjs import momentjs
+app.jinja_env.globals['momentjs'] = momentjs
+
+

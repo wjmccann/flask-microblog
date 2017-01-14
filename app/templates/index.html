@@ -24,9 +24,12 @@
     {% include 'post.html' %}
     {% endfor %}
 	
-	{% if posts.has_prev %}<a href="{{ url_for('index', page=posts.prev_num) }}">&lt;&lt;Prev Page</a>
-	{% else %} &lt;&lt; Prev Page {% endif %}
+	<ul class="pagination">
+	{% if posts.has_prev %}<li><a href="{{ url_for('index', page=posts.prev_num) }}">&lt;&lt;Prev Page</a></li>
+	{% else %} <li class="disabled"><a href="#">&lt;&lt; Prev Page </a></li>{% endif %}
 	
-	{% if posts.has_next %}<a href="{{ url_for('index', page=posts.next_num) }}">Next Page &gt;&gt;</a>
-	{% else %} Next Page &gt;&gt; {% endif %}
+	{% if posts.has_next %}<li><a href="{{ url_for('index', page=posts.next_num) }}">Next Page &gt;&gt;</a></li>
+	{% else %}<li class="disabled"> <a href="#">Next Page &gt;&gt; </a></li>{% endif %}
+	</ul>
+
 {% endblock %}

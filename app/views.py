@@ -1,12 +1,13 @@
 from flask import render_template, flash, redirect, session, url_for, request, g
-from app import app, db
+from app import app, db, babel
 from .forms import LoginForm, SignupForm, EditForm, PostForm
 from flask_login import login_required, login_user, current_user, logout_user, confirm_login, login_fresh
 from .models import User, Post
 from datetime import datetime
 from werkzeug.utils import secure_filename
 import os, shutil
-from config import POSTS_PER_PAGE
+from config import POSTS_PER_PAGE, UPLOAD_FOLDER, LANGUAGES
+from flask_babel import gettext
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/index', methods=['GET', 'POST'])
@@ -20,7 +21,7 @@ def index(page=1):
 		post = Post(body=form.post.data, timestamp=datetime.utcnow(), author=user)
 		db.session.add(post)
 		db.session.commit()
-		flash('Your post is now live!')
+		flash(gettext('Your post is now live!'))
 		return redirect(url_for('index'))
 	
 	posts = current_user.followed_posts().paginate(page, POSTS_PER_PAGE, False)
@@ -39,7 +40,7 @@ def login():
 			if authenticated:
 				
 				login_user(user, remember=form.remember_me.data)
-				flash('login successful')
+				flash(gettext('login successful'))
 				return redirect('/index')
 		else:
 			flash('Username does not exist')
@@ -50,7 +51,7 @@ def login():
 @app.route('/logout')
 def logout():
 	logout_user()
-	flash('You have logged out')
+	flash(gettext('You have logged out'))
 	return redirect(url_for('index'))
 	
 @app.route('/signup', methods=['GET', 'POST'])
@@ -69,6 +70,7 @@ def signup():
 			return redirect(url_for('signup'))
 			
 		try:
+			
 			user = User()
 			form.populate_obj(user)
 			
@@ -84,7 +86,7 @@ def signup():
 		db.session.commit()
 		
 		#create blank avatar
-		shutil.copy2('app/static/avatars/blank.jpg', ('app/static/avatars/'+str(user.id)+'.jpg'))
+		shutil.copy2((UPLOAD_FOLDER + 'blank.jpg'), (UPLOAD_FOLDER+str(user.id)+'.jpg'))
 		
 		#log in new user
 		login_user(user)
@@ -131,7 +133,7 @@ def edit():
 		if f.filename != '':
 			f.filename = str(current_user.id)+'.jpg'
 			filename = secure_filename(f.filename)
-			f.save(os.path.join('app/static/avatars', filename))
+			f.save(os.path.join(UPLOAD_FOLDER, filename))
 		
 		db.session.add(current_user)
 		db.session.commit()
@@ -194,3 +196,7 @@ def unfollow(nickname):
 	db.session.commit()
 	flash('You have stopped following ' + nickname)
 	return redirect(url_for('user', nickname=nickname))
+	
+@babel.localeselector
+def get_locale():
+	return request.accept_languages.best_match(LANGUAGES.keys())

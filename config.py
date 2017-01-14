@@ -9,3 +9,10 @@ SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'app.db')
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
 
 POSTS_PER_PAGE = 3
+
+UPLOAD_FOLDER = 'app/static/avatars/'
+
+LANGUAGES = {
+	'en': 'English',
+	'es': 'Espanol'
+}
